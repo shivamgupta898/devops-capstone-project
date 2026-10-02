@@ -27,22 +27,20 @@
         state: started
         enabled: yes
 
-    - name: Import Jenkins official public key directly via gpg recv-keys
+    - name: Download and dearmor Jenkins official GPG key
       shell: |
-        gpg --no-default-keyring --keyring /usr/share/keyrings/jenkins-keyring.gpg --keyserver keyserver.ubuntu.com --recv-keys 7198F4B714ABFC68
+        curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | gpg --dearmor --yes -o /usr/share/keyrings/jenkins-keyring.gpg
         chmod 644 /usr/share/keyrings/jenkins-keyring.gpg
 
-    - name: Add Jenkins repository referencing keyring
-      copy:
-        dest: /etc/apt/sources.list.d/jenkins.list
-        content: |
-          deb [signed-by=/usr/share/keyrings/jenkins-keyring.gpg] https://pkg.jenkins.io/debian-stable binary/
+    - name: Add Jenkins repository
+      shell: |
+        echo "deb [signed-by=/usr/share/keyrings/jenkins-keyring.gpg] https://pkg.jenkins.io/debian-stable binary/" > /etc/apt/sources.list.d/jenkins.list
+        apt-get update
 
-    - name: Update apt cache and install Jenkins
+    - name: Install Jenkins package
       apt:
         name: jenkins
         state: present
-        update_cache: yes
 
     - name: Add ubuntu and jenkins users to docker group
       user:
