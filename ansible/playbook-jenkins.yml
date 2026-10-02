@@ -27,23 +27,17 @@
         state: started
         enabled: yes
 
-    - name: Create keyring directory
-      file:
-        path: /etc/apt/keyrings
-        state: directory
-        mode: '0755'
-
-    - name: Download and dearmor Jenkins GPG key
+    - name: Import Jenkins GPG key directly via apt-key recv-keys
       shell: |
-        curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | gpg --dearmor -o /etc/apt/keyrings/jenkins-keyring.gpg --yes
+        curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | tee /etc/apt/trusted.gpg.d/jenkins.asc > /dev/null
 
-    - name: Add Jenkins repository with dearmored key
+    - name: Add Jenkins repository
       copy:
         dest: /etc/apt/sources.list.d/jenkins.list
         content: |
-          deb [signed-by=/etc/apt/keyrings/jenkins-keyring.gpg] https://pkg.jenkins.io/debian-stable binary/
+          deb [signed-by=/etc/apt/trusted.gpg.d/jenkins.asc] https://pkg.jenkins.io/debian-stable binary/
 
-    - name: Install Jenkins
+    - name: Update apt cache and install Jenkins
       apt:
         name: jenkins
         state: present
