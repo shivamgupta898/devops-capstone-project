@@ -1,0 +1,15 @@
+# Terraform local state and runtime files
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform.lock.hcl
+
+# SSH Keys and sensitive credentials
+*.pem
+*.key
+id_rsa*
+
+# OS specific files
+Thumbs.db
+.DS_Store
