@@ -27,20 +27,22 @@
         state: started
         enabled: yes
 
-    - name: Download and dearmor Jenkins official GPG key
+    - name: Download and dearmor Jenkins official signing key via keyserver web API
       shell: |
-        curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | gpg --dearmor --yes -o /usr/share/keyrings/jenkins-keyring.gpg
+        curl -s "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x7198F4B714ABFC68" | gpg --dearmor | tee /usr/share/keyrings/jenkins-keyring.gpg > /dev/null
         chmod 644 /usr/share/keyrings/jenkins-keyring.gpg
 
     - name: Add Jenkins repository
-      shell: |
-        echo "deb [signed-by=/usr/share/keyrings/jenkins-keyring.gpg] https://pkg.jenkins.io/debian-stable binary/" > /etc/apt/sources.list.d/jenkins.list
-        apt-get update
+      copy:
+        dest: /etc/apt/sources.list.d/jenkins.list
+        content: |
+          deb [signed-by=/usr/share/keyrings/jenkins-keyring.gpg] https://pkg.jenkins.io/debian-stable binary/
 
     - name: Install Jenkins package
       apt:
         name: jenkins
         state: present
+        update_cache: yes
 
     - name: Add ubuntu and jenkins users to docker group
       user:
