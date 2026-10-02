@@ -12,6 +12,7 @@
           - curl
           - git
           - ca-certificates
+          - gnupg
         state: present
         update_cache: yes
 
@@ -26,15 +27,21 @@
         state: started
         enabled: yes
 
-    - name: Add Jenkins repository key
-      shell: |
-        curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | tee /usr/share/keyrings/jenkins-keyring.asc > /dev/null
+    - name: Create keyring directory
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
 
-    - name: Add Jenkins repository
+    - name: Download and dearmor Jenkins GPG key
+      shell: |
+        curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | gpg --dearmor -o /etc/apt/keyrings/jenkins-keyring.gpg --yes
+
+    - name: Add Jenkins repository with dearmored key
       copy:
         dest: /etc/apt/sources.list.d/jenkins.list
         content: |
-          deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/
+          deb [signed-by=/etc/apt/keyrings/jenkins-keyring.gpg] https://pkg.jenkins.io/debian-stable binary/
 
     - name: Install Jenkins
       apt:
