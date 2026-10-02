@@ -4,6 +4,8 @@ pipeline {
     environment {
         DOCKER_IMAGE = 'shivamgupta898/simple-java-app'
         SCANNER_HOME = tool 'sonar-scanner'
+        S3_BUCKET = 'shivam-capstone-artifacts-2026'
+        AWS_DEFAULT_REGION = 'ap-south-1'
     }
 
     stages {
@@ -20,6 +22,22 @@ pipeline {
             post {
                 always {
                     junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        stage('Archive Artifact to AWS S3') {
+            steps {
+                withCredentials([
+                    string(credentialsId: 'aws-access-key-id', variable: 'AWS_ACCESS_KEY_ID'),
+                    string(credentialsId: 'aws-secret-access-key', variable: 'AWS_SECRET_ACCESS_KEY')
+                ]) {
+                    sh """
+                        echo "Uploading build artifact to AWS S3 bucket: ${S3_BUCKET}..."
+                        aws s3 cp target/simple-java-app-1.0.0.jar s3://${S3_BUCKET}/builds/build-${BUILD_NUMBER}/simple-java-app-${BUILD_NUMBER}.jar
+                        aws s3 cp target/simple-java-app-1.0.0.jar s3://${S3_BUCKET}/builds/latest/simple-java-app.jar
+                        aws s3 ls s3://${S3_BUCKET}/builds/build-${BUILD_NUMBER}/
+                    """
                 }
             }
         }
@@ -64,7 +82,7 @@ pipeline {
 
     post {
         success {
-            echo "CI/CD Pipeline executed successfully! Application deployed to Kubernetes."
+            echo "CI/CD Pipeline executed successfully! Application deployed to Kubernetes and artifact archived to S3."
         }
         failure {
             echo "Pipeline execution failed. Check console output."
