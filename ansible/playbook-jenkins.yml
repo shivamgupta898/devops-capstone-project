@@ -1,0 +1,64 @@
+---
+- name: Setup Jenkins & SonarQube Server
+  hosts: jenkins
+  become: yes
+  tasks:
+    - name: Install base tools & Java 21
+      apt:
+        name:
+          - openjdk-21-jdk
+          - maven
+          - unzip
+          - curl
+          - git
+          - ca-certificates
+        state: present
+        update_cache: yes
+
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Ensure Docker service is running
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Add Jenkins repository key
+      shell: |
+        curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | tee /usr/share/keyrings/jenkins-keyring.asc > /dev/null
+
+    - name: Add Jenkins repository
+      copy:
+        dest: /etc/apt/sources.list.d/jenkins.list
+        content: |
+          deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/
+
+    - name: Install Jenkins
+      apt:
+        name: jenkins
+        state: present
+        update_cache: yes
+
+    - name: Add ubuntu and jenkins users to docker group
+      user:
+        name: "{{ item }}"
+        groups: docker
+        append: yes
+      loop:
+        - ubuntu
+        - jenkins
+
+    - name: Start Jenkins service
+      systemd:
+        name: jenkins
+        state: started
+        enabled: yes
+
+    - name: Run SonarQube container
+      shell: |
+        if ! docker ps -a --format '{{ '{{' }} .Names {{ '}}' }}' | grep -q '^sonarqube$'; then
+          docker run -d --name sonarqube -p 9000:9000 --restart always sonarqube:lts-community
+        fi
