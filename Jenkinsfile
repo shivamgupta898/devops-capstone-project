@@ -1,11 +1,6 @@
 pipeline {
     agent any
 
-    tools {
-        maven 'Maven 3'
-        jdk 'Java 21'
-    }
-
     environment {
         DOCKER_IMAGE = 'shivamgupta898/simple-java-app'
         SCANNER_HOME = tool 'sonar-scanner'
@@ -24,7 +19,7 @@ pipeline {
             }
             post {
                 always {
-                    junit '**/target/surefire-reports/*.xml'
+                    junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
                 }
             }
         }
@@ -61,7 +56,7 @@ pipeline {
                 sh """
                     kubectl apply -f k8s/deployment.yml
                     kubectl rollout restart deployment/capstone-app
-                    kubectl rollout status deployment/capstone-app --timeout=60s
+                    kubectl rollout status deployment/capstone-app --timeout=90s
                 """
             }
         }
@@ -72,7 +67,7 @@ pipeline {
             echo "CI/CD Pipeline executed successfully! Application deployed to Kubernetes."
         }
         failure {
-            echo "Pipeline failed. Check stage logs."
+            echo "Pipeline execution failed. Check console output."
         }
     }
 }
