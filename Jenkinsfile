@@ -72,6 +72,8 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 sh """
+                    kubectl apply -f k8s/mysql-deployment.yml
+                    kubectl rollout status deployment/mysql --timeout=120s
                     kubectl apply -f k8s/deployment.yml
                     kubectl rollout restart deployment/capstone-app
                     kubectl rollout status deployment/capstone-app --timeout=90s
@@ -82,7 +84,7 @@ pipeline {
 
     post {
         success {
-            echo "CI/CD Pipeline executed successfully! Application deployed to Kubernetes and artifact archived to S3."
+            echo "CI/CD Pipeline executed successfully! 2-Tier Application deployed to Kubernetes."
         }
         failure {
             echo "Pipeline execution failed. Check console output."
