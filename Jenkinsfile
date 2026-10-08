@@ -2,9 +2,10 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'shivamgupta898/simple-java-app'
-        SCANNER_HOME = tool 'sonar-scanner'
-        S3_BUCKET = 'shivam-capstone-artifacts-2026'
+        BACKEND_IMAGE  = 'shivamgupta898/simple-java-app'
+        FRONTEND_IMAGE = 'shivamgupta898/capstone-frontend'
+        SCANNER_HOME   = tool 'sonar-scanner'
+        S3_BUCKET      = 'shivam-capstone-artifacts-2026'
         AWS_DEFAULT_REGION = 'ap-south-1'
     }
 
@@ -15,7 +16,7 @@ pipeline {
             }
         }
 
-        stage('Build & Test') {
+        stage('Build & Test Backend') {
             steps {
                 sh 'mvn clean package -DskipTests=false'
             }
@@ -56,27 +57,42 @@ pipeline {
             }
         }
 
-        stage('Build & Push Docker Image') {
+        stage('Build & Push Docker Images') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
                     sh """
                         echo "\$DOCKER_PASSWORD" | docker login -u "\$DOCKER_USERNAME" --password-stdin
-                        docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} -t ${DOCKER_IMAGE}:latest .
-                        docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
-                        docker push ${DOCKER_IMAGE}:latest
+                        
+                        # Backend Image Build & Push
+                        docker build -t ${BACKEND_IMAGE}:${BUILD_NUMBER} -t ${BACKEND_IMAGE}:latest .
+                        docker push ${BACKEND_IMAGE}:${BUILD_NUMBER}
+                        docker push ${BACKEND_IMAGE}:latest
+
+                        # Frontend Image Build & Push
+                        docker build -t ${FRONTEND_IMAGE}:${BUILD_NUMBER} -t ${FRONTEND_IMAGE}:latest ./frontend
+                        docker push ${FRONTEND_IMAGE}:${BUILD_NUMBER}
+                        docker push ${FRONTEND_IMAGE}:latest
                     """
                 }
             }
         }
 
-        stage('Deploy to Kubernetes') {
+        stage('Deploy 3-Tier to Kubernetes') {
             steps {
                 sh """
+                    # 1. Tier 3: Database Rollout
                     kubectl apply -f k8s/mysql-deployment.yml
                     kubectl rollout status deployment/mysql --timeout=120s
+
+                    # 2. Tier 2: Backend REST API Rollout (ClusterIP)
                     kubectl apply -f k8s/deployment.yml
                     kubectl rollout restart deployment/capstone-app
                     kubectl rollout status deployment/capstone-app --timeout=90s
+
+                    # 3. Tier 1: Frontend Web UI Rollout (NodePort 30080)
+                    kubectl apply -f k8s/frontend-deployment.yml
+                    kubectl rollout restart deployment/capstone-frontend
+                    kubectl rollout status deployment/capstone-frontend --timeout=90s
                 """
             }
         }
@@ -84,7 +100,7 @@ pipeline {
 
     post {
         success {
-            echo "CI/CD Pipeline executed successfully! 2-Tier Application deployed to Kubernetes."
+            echo "3-Tier Microservices Architecture deployed successfully to Kubernetes!"
         }
         failure {
             echo "Pipeline execution failed. Check console output."

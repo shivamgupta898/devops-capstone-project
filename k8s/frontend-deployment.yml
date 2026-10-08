@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: capstone-frontend
+  labels:
+    app: capstone-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: capstone-frontend
+  template:
+    metadata:
+      labels:
+        app: capstone-frontend
+    spec:
+      containers:
+      - name: capstone-frontend
+        image: shivamgupta898/capstone-frontend:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: capstone-frontend-service
+spec:
+  type: NodePort
+  selector:
+    app: capstone-frontend
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: 30080

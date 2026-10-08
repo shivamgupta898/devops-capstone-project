@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevOps Capstone | 3-Tier Microservices Platform</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .card { background: #1e293b; border-radius: 12px; padding: 32px; max-width: 650px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; }
+        h1 { font-size: 1.6rem; margin-bottom: 8px; color: #38bdf8; }
+        p.subtitle { color: #94a3b8; font-size: 0.95rem; margin-bottom: 24px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+        .box { background: #0f172a; padding: 16px; border-radius: 8px; border: 1px solid #334155; }
+        .box span { display: block; font-size: 0.8rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+        .box strong { font-size: 1.1rem; color: #f1f5f9; display: block; margin-top: 4px; }
+        .status-badge { display: inline-block; padding: 4px 10px; border-radius: 9999px; font-size: 0.8rem; font-weight: 600; margin-top: 6px; }
+        .status-up { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid #22c55e; }
+        .status-down { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
+        .btn { display: inline-block; width: 100%; text-align: center; background: #0284c7; color: white; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; }
+        .btn:hover { background: #0369a1; }
+        .json-viewer { background: #020617; border-radius: 6px; padding: 12px; margin-top: 16px; font-family: monospace; font-size: 0.85rem; color: #a5f3fc; overflow-x: auto; border: 1px solid #1e293b; min-height: 48px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Cloud Architecture Dashboard</h1>
+        <p class="subtitle">Decoupled 3-Tier Enterprise Deployment on Kubernetes</p>
+        
+        <div class="grid">
+            <div class="box">
+                <span>Tier 1: Frontend</span>
+                <strong>NGINX Static Web</strong>
+                <span class="status-badge status-up">ONLINE</span>
+            </div>
+            <div class="box">
+                <span>Tier 2: Backend API</span>
+                <strong>Java Temurin-21 REST</strong>
+                <span id="backend-status" class="status-badge status-up">CHECKING...</span>
+            </div>
+            <div class="box" style="grid-column: span 2;">
+                <span>Tier 3: Persistence Layer</span>
+                <strong id="db-host">MySQL 8.0 (ClusterIP)</strong>
+                <span id="db-status" class="status-badge status-up">CHECKING...</span>
+            </div>
+        </div>
+
+        <button class="btn" onclick="checkTelemetry()">Refresh Telemetry</button>
+        <div class="json-viewer" id="raw-json">Awaiting API status query...</div>
+    </div>
+
+    <script>
+        async function checkTelemetry() {
+            const rawBox = document.getElementById('raw-json');
+            const backendBadge = document.getElementById('backend-status');
+            const dbBadge = document.getElementById('db-status');
+            const dbHost = document.getElementById('db-host');
+
+            rawBox.textContent = "Querying /db-status...";
+            try {
+                const response = await fetch('/db-status');
+                const data = await response.json();
+                rawBox.textContent = JSON.stringify(data, null, 2);
+
+                backendBadge.textContent = "REACHABLE";
+                backendBadge.className = "status-badge status-up";
+
+                if (data.database === "CONNECTED") {
+                    dbBadge.textContent = "CONNECTED (" + data.db_name + ")";
+                    dbBadge.className = "status-badge status-up";
+                    dbHost.textContent = "MySQL 8.0 @ " + data.host;
+                } else {
+                    dbBadge.textContent = "DISCONNECTED";
+                    dbBadge.className = "status-badge status-down";
+                }
+            } catch (err) {
+                rawBox.textContent = "API Error: " + err.message;
+                backendBadge.textContent = "UNREACHABLE";
+                backendBadge.className = "status-badge status-down";
+                dbBadge.textContent = "UNKNOWN";
+                dbBadge.className = "status-badge status-down";
+            }
+        }
+        window.onload = checkTelemetry;
+    </script>
+</body>
+</html>
