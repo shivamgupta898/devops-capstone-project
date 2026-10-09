@@ -1,11 +1,6 @@
 pipeline {
     agent any
 
-    tools {
-        jdk 'JDK-21'
-        maven 'Maven-3.9.16'
-    }
-
     environment {
         DOCKER_CREDS = credentials('dockerhub-creds')
         AWS_KEY      = credentials('aws-access-key-id')
