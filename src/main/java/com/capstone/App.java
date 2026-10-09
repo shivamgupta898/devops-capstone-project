@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.util.concurrent.Executors;
 
 public class App {
     private static final String DB_HOST = System.getenv().getOrDefault("DB_HOST", "mysql-service");
@@ -22,15 +23,18 @@ public class App {
         server.createContext("/", new RootHandler());
         server.createContext("/health", new HealthHandler());
         server.createContext("/db-status", new DbStatusHandler());
-        server.setExecutor(null);
-        System.out.println("2-Tier Web Server started on port 8080...");
+        server.createContext("/stress", new StressHandler());
+
+        // Multi-threaded executor taaki concurrent requests parallel handle ho sakein
+        server.setExecutor(Executors.newFixedThreadPool(16));
+        System.out.println("Microservices Java Backend started on port 8080...");
         server.start();
     }
 
     static class RootHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
-            String response = "<h1>DevOps Capstone Project: 2-Tier Architecture Live on Kubernetes!</h1>"
+            String response = "<h1>DevOps Capstone Project: 3-Tier Microservices Live on Kubernetes!</h1>"
                             + "<p>Application Tier is running and connected to Kubernetes cluster.</p>";
             exchange.sendResponseHeaders(200, response.getBytes().length);
             OutputStream os = exchange.getResponseBody();
@@ -43,6 +47,26 @@ public class App {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             String response = "{\"status\":\"UP\",\"tier\":\"web-app\"}";
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, response.getBytes().length);
+            OutputStream os = exchange.getResponseBody();
+            os.write(response.getBytes());
+            os.close();
+        }
+    }
+
+    static class StressHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            long startTime = System.currentTimeMillis();
+            // Intense CPU computation for 1000ms per request to trigger HPA scaling
+            long endTime = startTime + 1000;
+            double dummy = 0;
+            while (System.currentTimeMillis() < endTime) {
+                dummy += Math.atan(Math.sqrt(Math.random() * 10000));
+            }
+
+            String response = "{\"status\":\"STRESS_COMPLETED\",\"duration_ms\":" + (System.currentTimeMillis() - startTime) + "}";
             exchange.getResponseHeaders().set("Content-Type", "application/json");
             exchange.sendResponseHeaders(200, response.getBytes().length);
             OutputStream os = exchange.getResponseBody();

@@ -213,12 +213,12 @@
       <div class="card load-box">
         <div>
           <h2 style="font-size: 1rem; margin-bottom: 0.35rem;">Simulate Traffic Spike (HPA Test)</h2>
-          <p style="font-size: 0.78rem; color: var(--text-muted);">Triggers concurrent HTTP requests to verify auto-scaling behavior.</p>
+          <p style="font-size: 0.78rem; color: var(--text-muted);">Triggers concurrent CPU-intensive requests to force HPA pod scale-out.</p>
         </div>
         <div class="progress-bar-bg" id="p-bar-bg">
           <div class="progress-bar-fill" id="p-bar-fill"></div>
         </div>
-        <button class="btn-warn" id="btn-stress" onclick="triggerTrafficSpike()">Trigger 100 HTTP Requests</button>
+        <button class="btn-warn" id="btn-stress" onclick="triggerTrafficSpike()">Trigger High Load Traffic Spike</button>
       </div>
     </div>
 
@@ -370,26 +370,44 @@
       renderTable();
     });
 
-    // Traffic Simulator for HPA
+    // High Load Traffic Simulator for HPA
     async function triggerTrafficSpike() {
       const btn = document.getElementById('btn-stress');
       const pBg = document.getElementById('p-bar-bg');
       const pFill = document.getElementById('p-bar-fill');
       
       btn.disabled = true;
-      btn.textContent = "Firing Requests...";
+      btn.textContent = "Generating High CPU Load...";
+      btn.style.opacity = "0.7";
       pBg.style.display = "block";
-      
-      const totalRequests = 100;
-      for (let i = 1; i <= totalRequests; i++) {
-        fetch('/health').catch(() => {});
-        pFill.style.width = i + '%';
-        if (i % 10 === 0) await new Promise(r => setTimeout(r, 35));
+      pFill.style.width = '15%';
+
+      // 40 concurrent heavy mathematical requests to immediately spike CPU above 60%
+      const concurrentRequests = 40;
+      const promises = [];
+      for (let i = 0; i < concurrentRequests; i++) {
+        promises.push(fetch('/stress').catch(() => {}));
       }
-      
+
+      let progress = 15;
+      const progressTimer = setInterval(() => {
+        progress += 10;
+        if (progress <= 90) pFill.style.width = progress + '%';
+      }, 250);
+
+      try {
+        await Promise.all(promises);
+      } catch (err) {
+        // Continue even if some requests timeout during scaling
+      }
+
+      clearInterval(progressTimer);
+      pFill.style.width = '100%';
+
       setTimeout(() => {
         btn.disabled = false;
-        btn.textContent = "Trigger 100 HTTP Requests";
+        btn.textContent = "Trigger High Load Traffic Spike";
+        btn.style.opacity = "1";
         pBg.style.display = "none";
         pFill.style.width = '0%';
         checkTelemetry();
