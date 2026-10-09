@@ -1,87 +1,410 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="night">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DevOps Capstone | 3-Tier Microservices Platform</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-        .card { background: #1e293b; border-radius: 12px; padding: 32px; max-width: 650px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; }
-        h1 { font-size: 1.6rem; margin-bottom: 8px; color: #38bdf8; }
-        p.subtitle { color: #94a3b8; font-size: 0.95rem; margin-bottom: 24px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-        .box { background: #0f172a; padding: 16px; border-radius: 8px; border: 1px solid #334155; }
-        .box span { display: block; font-size: 0.8rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
-        .box strong { font-size: 1.1rem; color: #f1f5f9; display: block; margin-top: 4px; }
-        .status-badge { display: inline-block; padding: 4px 10px; border-radius: 9999px; font-size: 0.8rem; font-weight: 600; margin-top: 6px; }
-        .status-up { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid #22c55e; }
-        .status-down { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
-        .btn { display: inline-block; width: 100%; text-align: center; background: #0284c7; color: white; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; }
-        .btn:hover { background: #0369a1; }
-        .json-viewer { background: #020617; border-radius: 6px; padding: 12px; margin-top: 16px; font-family: monospace; font-size: 0.85rem; color: #a5f3fc; overflow-x: auto; border: 1px solid #1e293b; min-height: 48px; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpsControl | Cluster Operations & Microservices Console</title>
+  <style>
+    /* Night Theme (Dark UI) */
+    :root[data-theme="night"] {
+      --bg: #0b0f19;
+      --card-bg: #111827;
+      --card-border: #1f2937;
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --input-bg: #0b0f19;
+      --table-border: #1a2333;
+      --tag-prod-bg: rgba(239, 68, 68, 0.15);
+      --tag-stage-bg: rgba(245, 158, 11, 0.15);
+      --toggle-bg: #1e293b;
+      --toggle-active: #38bdf8;
+      --toggle-active-text: #0b0f19;
+    }
+
+    /* Day Theme (Light UI) */
+    :root[data-theme="day"] {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --card-border: #e2e8f0;
+      --accent: #0284c7;
+      --accent-hover: #0369a1;
+      --success: #16a34a;
+      --warning: #d97706;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --input-bg: #f1f5f9;
+      --table-border: #f1f5f9;
+      --tag-prod-bg: #fee2e2;
+      --tag-stage-bg: #fef3c7;
+      --toggle-bg: #e2e8f0;
+      --toggle-active: #0284c7;
+      --toggle-active-text: #ffffff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease; }
+    body { background-color: var(--bg); color: var(--text); padding: 1.5rem 1rem; min-height: 100vh; }
+    .container { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.25rem; }
+
+    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); padding-bottom: 1rem; }
+    .title-area h1 { font-size: 1.35rem; font-weight: 700; color: var(--text); }
+    .title-area p { font-size: 0.82rem; color: var(--text-muted); }
+    .header-actions { display: flex; align-items: center; gap: 1rem; }
+    
+    .badges { display: flex; gap: 0.5rem; }
+    .badge { font-size: 0.72rem; padding: 0.25rem 0.6rem; border-radius: 9999px; font-weight: 600; text-transform: uppercase; border: 1px solid transparent; }
+    .badge-aws { background: rgba(56, 189, 248, 0.15); color: var(--accent); border-color: var(--accent); }
+    .badge-hpa { background: rgba(16, 185, 129, 0.15); color: var(--success); border-color: var(--success); }
+
+    /* Theme Segmented Switcher */
+    .theme-controller { display: flex; align-items: center; gap: 0.5rem; }
+    .theme-label { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .theme-group { display: flex; background: var(--toggle-bg); border: 1px solid var(--card-border); border-radius: 6px; padding: 2px; gap: 2px; }
+    .theme-btn { background: transparent; border: none; padding: 0.3rem 0.65rem; border-radius: 4px; font-size: 0.78rem; font-weight: 600; color: var(--text); cursor: pointer; display: flex; align-items: center; gap: 0.3rem; }
+    .theme-btn.active { background: var(--toggle-active); color: var(--toggle-active-text); }
+
+    .metrics-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; }
+    .metric-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 0.85rem 1rem; }
+    .metric-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; }
+    .metric-value { font-size: 1.15rem; font-weight: 700; color: var(--text); margin-top: 0.25rem; }
+
+    .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+    .card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 1.25rem; }
+    .card h3 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.5rem; }
+    .status-indicator { display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; font-weight: 600; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; background-color: var(--warning); display: inline-block; }
+    .dot.online { background-color: var(--success); box-shadow: 0 0 8px rgba(16, 185, 129, 0.5); }
+
+    .action-panel { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; }
+    @media (max-width: 768px) { .action-panel { grid-template-columns: 1fr; } }
+
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.75rem; }
+    label { font-size: 0.8rem; color: var(--text-muted); }
+    input, select { background: var(--input-bg); border: 1px solid var(--card-border); border-radius: 6px; padding: 0.55rem 0.75rem; color: var(--text); font-size: 0.85rem; }
+    input:focus, select:focus { outline: 1px solid var(--accent); }
+    .form-row { display: grid; grid-template-columns: 2fr 1fr; gap: 0.75rem; }
+
+    button { background-color: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 0.6rem 1rem; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
+    button:hover { background-color: var(--accent-hover); }
+    button.btn-warn { background-color: var(--warning); color: #000; }
+    button.btn-warn:hover { opacity: 0.9; }
+    button.btn-outline { background-color: transparent; border: 1px solid var(--card-border); color: var(--text); }
+    button.btn-outline:hover { border-color: var(--accent); }
+
+    .load-box { display: flex; flex-direction: column; justify-content: space-between; gap: 0.75rem; }
+    .progress-bar-bg { width: 100%; height: 8px; background: var(--input-bg); border-radius: 4px; overflow: hidden; display: none; border: 1px solid var(--card-border); }
+    .progress-bar-fill { width: 0%; height: 100%; background: var(--warning); transition: width 0.08s; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 0.75rem; font-size: 0.85rem; }
+    th { text-align: left; padding: 0.6rem; border-bottom: 1px solid var(--card-border); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; }
+    td { padding: 0.65rem 0.6rem; border-bottom: 1px solid var(--table-border); }
+    .tag { padding: 0.15rem 0.45rem; border-radius: 4px; font-size: 0.72rem; font-weight: 600; }
+    .tag-prod { background: var(--tag-prod-bg); color: #ef4444; }
+    .tag-stage { background: var(--tag-stage-bg); color: #d97706; }
+
+    .param-list { display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.8rem; margin-top: 0.5rem; }
+    .param-item { display: flex; justify-content: space-between; padding: 0.35rem 0; border-bottom: 1px dashed var(--card-border); }
+    .param-key { color: var(--text-muted); font-family: monospace; }
+    .param-val { color: var(--accent); font-family: monospace; font-weight: 600; }
+
+    footer { text-align: center; color: var(--text-muted); font-size: 0.78rem; border-top: 1px solid var(--card-border); padding-top: 1rem; margin-top: 0.5rem; }
+  </style>
 </head>
 <body>
-    <div class="card">
-        <h1>Cloud Architecture Dashboard</h1>
-        <p class="subtitle">Decoupled 3-Tier Enterprise Deployment on Kubernetes</p>
-        
-        <div class="grid">
-            <div class="box">
-                <span>Tier 1: Frontend</span>
-                <strong>NGINX Static Web</strong>
-                <span class="status-badge status-up">ONLINE</span>
-            </div>
-            <div class="box">
-                <span>Tier 2: Backend API</span>
-                <strong>Java Temurin-21 REST</strong>
-                <span id="backend-status" class="status-badge status-up">CHECKING...</span>
-            </div>
-            <div class="box" style="grid-column: span 2;">
-                <span>Tier 3: Persistence Layer</span>
-                <strong id="db-host">MySQL 8.0 (ClusterIP)</strong>
-                <span id="db-status" class="status-badge status-up">CHECKING...</span>
-            </div>
+  <div class="container">
+    <header>
+      <div class="title-area">
+        <h1>OpsControl Platform</h1>
+        <p>Kubernetes Decoupled 3-Tier Enterprise Deployment</p>
+      </div>
+      <div class="header-actions">
+        <div class="badges">
+          <span class="badge badge-aws">AWS ap-south-1</span>
+          <span class="badge badge-hpa">HPA Ready</span>
         </div>
 
-        <button class="btn" onclick="checkTelemetry()">Refresh Telemetry</button>
-        <div class="json-viewer" id="raw-json">Awaiting API status query...</div>
+        <!-- Theme Segment: Day / Night Buttons -->
+        <div class="theme-controller">
+          <span class="theme-label">Theme:</span>
+          <div class="theme-group">
+            <button class="theme-btn" id="btn-day" onclick="setTheme('day')">
+              ☀️ Day
+            </button>
+            <button class="theme-btn active" id="btn-night" onclick="setTheme('night')">
+              🌙 Night
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- 1. Live Infrastructure Quick Stats -->
+    <div class="metrics-bar">
+      <div class="metric-card">
+        <div class="metric-label">Cluster Nodes</div>
+        <div class="metric-value">2 Active Nodes</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Ingress Gateway</div>
+        <div class="metric-value">Port 80 (HTTP)</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">API Latency</div>
+        <div class="metric-value" id="latency-val">-- ms</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Active Workloads</div>
+        <div class="metric-value">5 Pods Running</div>
+      </div>
     </div>
 
-    <script>
-        async function checkTelemetry() {
-            const rawBox = document.getElementById('raw-json');
-            const backendBadge = document.getElementById('backend-status');
-            const dbBadge = document.getElementById('db-status');
-            const dbHost = document.getElementById('db-host');
+    <!-- 2. System Status Grid -->
+    <div class="status-grid">
+      <div class="card">
+        <h3>Tier 1: Frontend Gateway</h3>
+        <div class="status-indicator">
+          <span class="dot online"></span>
+          <span>NGINX Router (Active)</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Tier 2: Headless API</h3>
+        <div class="status-indicator">
+          <span id="api-dot" class="dot"></span>
+          <span id="api-status">Connecting...</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Tier 3: Persistence Engine</h3>
+        <div class="status-indicator">
+          <span id="db-dot" class="dot"></span>
+          <span id="db-status">Connecting...</span>
+        </div>
+      </div>
+    </div>
 
-            rawBox.textContent = "Querying /db-status...";
-            try {
-                const response = await fetch('/db-status');
-                const data = await response.json();
-                rawBox.textContent = JSON.stringify(data, null, 2);
+    <!-- 3. Operations & HPA Traffic Simulator -->
+    <div class="action-panel">
+      <!-- Cluster Task Logging -->
+      <div class="card">
+        <h2 style="font-size: 1rem; margin-bottom: 0.75rem;">Create Cluster Operations Log</h2>
+        <form id="recordForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="taskName">Task / Event Details</label>
+              <input type="text" id="taskName" placeholder="e.g. Rolled out v1.2 with HPA" required>
+            </div>
+            <div class="form-group">
+              <label for="taskEnv">Environment</label>
+              <select id="taskEnv">
+                <option value="Production">Production</option>
+                <option value="Staging">Staging</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" style="width: 100%;">Commit Entry to Records</button>
+        </form>
+      </div>
 
-                backendBadge.textContent = "REACHABLE";
-                backendBadge.className = "status-badge status-up";
+      <!-- HPA Stress Simulator -->
+      <div class="card load-box">
+        <div>
+          <h2 style="font-size: 1rem; margin-bottom: 0.35rem;">Simulate Traffic Spike (HPA Test)</h2>
+          <p style="font-size: 0.78rem; color: var(--text-muted);">Triggers concurrent HTTP requests to verify auto-scaling behavior.</p>
+        </div>
+        <div class="progress-bar-bg" id="p-bar-bg">
+          <div class="progress-bar-fill" id="p-bar-fill"></div>
+        </div>
+        <button class="btn-warn" id="btn-stress" onclick="triggerTrafficSpike()">Trigger 100 HTTP Requests</button>
+      </div>
+    </div>
 
-                if (data.database === "CONNECTED") {
-                    dbBadge.textContent = "CONNECTED (" + data.db_name + ")";
-                    dbBadge.className = "status-badge status-up";
-                    dbHost.textContent = "MySQL 8.0 @ " + data.host;
-                } else {
-                    dbBadge.textContent = "DISCONNECTED";
-                    dbBadge.className = "status-badge status-down";
-                }
-            } catch (err) {
-                rawBox.textContent = "API Error: " + err.message;
-                backendBadge.textContent = "UNREACHABLE";
-                backendBadge.className = "status-badge status-down";
-                dbBadge.textContent = "UNKNOWN";
-                dbBadge.className = "status-badge status-down";
-            }
+    <!-- 4. Records Table & Config Inspector -->
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h2 style="font-size: 1rem;">Recent Cluster Activity Records</h2>
+          <button class="btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.78rem;" onclick="refreshDashboard()">Refresh</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Task Description</th>
+              <th>Env</th>
+              <th>Logged At</th>
+            </tr>
+          </thead>
+          <tbody id="recordsTableBody"></tbody>
+        </table>
+      </div>
+
+      <!-- K8s Config Inspector -->
+      <div class="card">
+        <h2 style="font-size: 1rem; margin-bottom: 0.5rem;">K8s Runtime Context</h2>
+        <div class="param-list">
+          <div class="param-item">
+            <span class="param-key">DB_HOST:</span>
+            <span class="param-val">mysql-service</span>
+          </div>
+          <div class="param-item">
+            <span class="param-key">DB_PORT:</span>
+            <span class="param-val">3306</span>
+          </div>
+          <div class="param-item">
+            <span class="param-key">DB_USER:</span>
+            <span class="param-val">capstoneuser</span>
+          </div>
+          <div class="param-item">
+            <span class="param-key">CREDENTIALS:</span>
+            <span class="param-val">Protected (Secret)</span>
+          </div>
+          <div class="param-item">
+            <span class="param-key">BACKEND_RUNTIME:</span>
+            <span class="param-val">Temurin JDK-21</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Maintained by Shivam Gupta | Kubernetes Microservices Architecture
+    </footer>
+  </div>
+
+  <script>
+    // Theme Management with Day & Night buttons
+    function initTheme() {
+      const savedTheme = localStorage.getItem('ops-theme') || 'night';
+      setTheme(savedTheme);
+    }
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('ops-theme', theme);
+
+      const btnDay = document.getElementById('btn-day');
+      const btnNight = document.getElementById('btn-night');
+
+      if (theme === 'day') {
+        btnDay.classList.add('active');
+        btnNight.classList.remove('active');
+      } else {
+        btnNight.classList.add('active');
+        btnDay.classList.remove('active');
+      }
+    }
+
+    // Telemetry & Latency Ping
+    async function checkTelemetry() {
+      const start = performance.now();
+      try {
+        const res = await fetch('/db-status');
+        const end = performance.now();
+        document.getElementById('latency-val').textContent = Math.round(end - start) + ' ms';
+        const data = await res.json();
+        
+        const apiDot = document.getElementById('api-dot');
+        const apiStatus = document.getElementById('api-status');
+        const dbDot = document.getElementById('db-dot');
+        const dbStatus = document.getElementById('db-status');
+
+        if (res.ok) {
+          apiDot.className = 'dot online';
+          apiStatus.textContent = 'Java Temurin-21 (Healthy)';
+
+          if (data.database === 'CONNECTED') {
+            dbDot.className = 'dot online';
+            dbStatus.textContent = 'MySQL 8.0 (' + data.db_name + ')';
+          } else {
+            dbDot.className = 'dot';
+            dbStatus.textContent = 'Disconnected';
+          }
         }
-        window.onload = checkTelemetry;
-    </script>
+      } catch (err) {
+        document.getElementById('api-status').textContent = 'Unreachable';
+        document.getElementById('db-status').textContent = 'Offline';
+        document.getElementById('latency-val').textContent = 'ERR';
+      }
+    }
+
+    // Records Log
+    let localLogs = [
+      { id: 101, task: "Migrated Monolith to Decoupled 3-Tier", env: "Production", timestamp: "Oct 8, 2026 17:45" },
+      { id: 102, task: "Ingress Controller bound to Port 80", env: "Production", timestamp: "Oct 8, 2026 18:30" },
+      { id: 103, task: "Configured Liveness & Readiness Probes", env: "Production", timestamp: "Oct 9, 2026 20:00" }
+    ];
+
+    function renderTable() {
+      const tbody = document.getElementById('recordsTableBody');
+      tbody.innerHTML = '';
+      localLogs.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>#${row.id}</td>
+          <td>${row.task}</td>
+          <td><span class="tag ${row.env === 'Production' ? 'tag-prod' : 'tag-stage'}">${row.env}</span></td>
+          <td style="color: var(--text-muted); font-size: 0.78rem;">${row.timestamp}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    document.getElementById('recordForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const task = document.getElementById('taskName').value;
+      const env = document.getElementById('taskEnv').value;
+      const now = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+      localLogs.unshift({
+        id: localLogs.length + 101,
+        task: task,
+        env: env,
+        timestamp: now
+      });
+
+      document.getElementById('taskName').value = '';
+      renderTable();
+    });
+
+    // Traffic Simulator for HPA
+    async function triggerTrafficSpike() {
+      const btn = document.getElementById('btn-stress');
+      const pBg = document.getElementById('p-bar-bg');
+      const pFill = document.getElementById('p-bar-fill');
+      
+      btn.disabled = true;
+      btn.textContent = "Firing Requests...";
+      pBg.style.display = "block";
+      
+      const totalRequests = 100;
+      for (let i = 1; i <= totalRequests; i++) {
+        fetch('/health').catch(() => {});
+        pFill.style.width = i + '%';
+        if (i % 10 === 0) await new Promise(r => setTimeout(r, 35));
+      }
+      
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.textContent = "Trigger 100 HTTP Requests";
+        pBg.style.display = "none";
+        pFill.style.width = '0%';
+        checkTelemetry();
+      }, 700);
+    }
+
+    function refreshDashboard() {
+      checkTelemetry();
+      renderTable();
+    }
+
+    // Init
+    initTheme();
+    checkTelemetry();
+    renderTable();
+  </script>
 </body>
 </html>
