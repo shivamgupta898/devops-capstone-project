@@ -1,0 +1,33 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: capstone-ingress
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - capstone.local
+    secretName: capstone-tls-secret
+  rules:
+  - host: capstone.local
+    http:
+      paths:
+      - path: /api(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: capstone-app-service
+            port:
+              number: 8080
+      - path: /()(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: capstone-frontend-service
+            port:
+              number: 80
