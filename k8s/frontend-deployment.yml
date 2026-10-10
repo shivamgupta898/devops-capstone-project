@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: capstone-frontend
-        image: shivamgupta898/capstone-frontend:35
+        image: shivamgupta898/capstone-frontend:36
         imagePullPolicy: Always
         ports:
         - containerPort: 80
