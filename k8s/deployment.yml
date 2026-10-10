@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: capstone-app
-        image: shivamgupta898/simple-java-app:21
+        image: shivamgupta898/simple-java-app:23
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
