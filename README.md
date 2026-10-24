@@ -1,6 +1,6 @@
 # Automated 3-Tier Web Application Infrastructure on Kubernetes with Autoscaling and Datadog Monitoring
 
-Production-grade deployment of a decoupled 3-tier web application running on a multi-node Kubernetes cluster on AWS. The setup includes infrastructure automation via Terraform, node configuration via Ansible, automated CI/CD with Jenkins and SonarQube, in-cluster traffic routing, Horizontal Pod Autoscaling (HPA), and live container metrics collection via Datadog.
+This repository contains the complete setup for deploying a 3-tier web app on AWS. It provisions EC2 instances using Terraform, configures nodes with Ansible, runs the application on Kubernetes with HPA enabled, and automates builds through Jenkins. Cluster monitoring and metrics are handled via Datadog.
 
 ---
 
