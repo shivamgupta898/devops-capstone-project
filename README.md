@@ -22,7 +22,7 @@ The workload runs across three isolated layers inside Kubernetes:
                               │
                               ▼ (Internal ClusterIP :8080)
             [ Java Backend API : simple-java-app ]
-            (Java 21 / Spring Boot | HPA: 2 se 5 Pods)
+            (Java 21 / Spring Boot | HPA: 2 to 5 Pods)
                               │
                               ▼ (Internal ClusterIP :3306)
             [ Database Layer : capstone-db ]
