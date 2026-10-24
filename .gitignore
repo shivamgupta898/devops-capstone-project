@@ -1,15 +1,25 @@
-# Terraform local state and runtime files
+# terraform
 **/.terraform/
 *.tfstate
 *.tfstate.*
 *.tfvars
-.terraform.lock.hcl
+*.tfvars.json
 
-# SSH Keys and sensitive credentials
+# credentials & keys
 *.pem
 *.key
+*.pub
 id_rsa*
+.env
 
-# OS specific files
-Thumbs.db
+# maven / java
+target/
+*.jar
+*.class
+
+# system & ide
+.vscode/
+.idea/
+*.log
 .DS_Store
+Thumbs.db
